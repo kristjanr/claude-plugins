@@ -1,0 +1,5 @@
+{
+  "name": "estonian-groceries-epromo",
+  "description": "Shop for groceries from ePromo.ee via Claude Code using browser automation",
+  "version": "0.1.0"
+}

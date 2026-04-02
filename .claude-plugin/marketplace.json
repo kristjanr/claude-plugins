@@ -1,0 +1,13 @@
+{
+  "name": "kristjanr-claude-plugins",
+  "owner": {
+    "name": "kristjanr"
+  },
+  "plugins": [
+    {
+      "name": "estonian-groceries-epromo",
+      "source": "./estonian-groceries-epromo",
+      "description": "Shop for groceries from ePromo.ee via Claude Code using browser automation"
+    }
+  ]
+}
