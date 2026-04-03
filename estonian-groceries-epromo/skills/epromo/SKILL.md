@@ -1,51 +1,57 @@
 ---
 name: epromo
-description: Use when the user wants to shop for groceries at ePromo.ee, search for products, add items to their ePromo cart, or view their cart. Requires an epromo.ee tab open and logged in within the Claude-in-Chrome browser.
-allowed-tools: mcp__claude-in-chrome__javascript_tool, mcp__claude-in-chrome__tabs_context_mcp, mcp__claude-in-chrome__navigate, mcp__claude-in-chrome__computer
+description: Use when the user wants to shop for groceries at ePromo.ee, search for products, add items to their ePromo cart, or view their cart. Uses a hybrid approach — search via CLI (curl_cffi), cart operations via Chrome browser.
+allowed-tools: Bash(*epromo-search.sh*), mcp__claude-in-chrome__javascript_tool, mcp__claude-in-chrome__tabs_context_mcp, mcp__claude-in-chrome__navigate, mcp__claude-in-chrome__computer
 ---
 
 # ePromo.ee Grocery Shopping
 
-Build an ePromo.ee grocery cart through conversation using browser-based API calls.
+Build an ePromo.ee grocery cart through conversation.
+
+## Architecture
+
+ePromo.ee is behind Cloudflare WAF. This plugin uses a **hybrid approach**:
+
+- **Search**: via `epromo-search.sh` (uses `curl_cffi` with Chrome TLS impersonation — no browser needed)
+- **Cart operations** (add, view, clear): via `javascript_tool` in a Chrome browser tab (Cloudflare blocks non-browser PUT/POST requests)
 
 ## Prerequisites
 
-- The user must have an epromo.ee tab **open and logged in** in the Claude-in-Chrome browser
+- `curl_cffi` Python package installed (`pip3 install curl_cffi`)
+- For cart operations: an epromo.ee tab **open and logged in** in the Claude-in-Chrome browser
 - If not logged in, navigate to `https://epromo.ee/auth/login` and help the user log in first
-- All API calls run as `fetch()` inside the browser tab (required to bypass Cloudflare WAF)
 
 ## Workflow
 
-1. **Find the ePromo tab** using `tabs_context_mcp` — look for a tab with `epromo.ee` in the URL
-2. **Search** for products the user wants using the search API
-3. **Present results** — show name, price, product code, stock status, and unit; let the user confirm or refine
-4. **Add confirmed items** to cart using the cart API
+1. **Search** for products using `epromo-search.sh` (fast, no browser needed)
+2. **Present results** — show name, price, product code, stock status, and unit; let the user confirm or refine
+3. **Find the ePromo tab** using `tabs_context_mcp` — look for a tab with `epromo.ee` in the URL
+4. **Add confirmed items** to cart via `javascript_tool` in the browser tab
 5. **Show cart summary** so the user can review before checkout
 6. When done, tell the user to open epromo.ee in their browser to complete checkout
 
 Always confirm product choices with the user before adding to cart. If a search returns multiple close matches, ask which one they want.
 
-## API Reference
+## Scripts
 
-All API calls must be made via `mcp__claude-in-chrome__javascript_tool` in an epromo.ee tab. The token for authenticated calls is extracted from cookies.
+All scripts are in the `scripts/` directory relative to this file.
 
-### Search Products
+### epromo-search.sh
 
-```javascript
-fetch('/api/proxy/quick-search?search=' + encodeURIComponent(TERM) + '&count=' + COUNT + '&page=1')
-  .then(r => r.json())
-  .then(data => JSON.stringify(data.products.map(p => ({
-    id: p.id, name: p.name, price: p.priceWithVat,
-    unit: p.measureUnit, inStock: p.inStock,
-    minAmount: p.minimumAmount, priceCoeff: p.priceCoefficient,
-    storageType: p.storageType
-  })), null, 2))
+Search for products by keyword. Does NOT require authentication or browser.
+
+```
+epromo-search.sh <term> [count]
 ```
 
-- `TERM` — search query (e.g. "piim", "juust", "kana")
-- `COUNT` — number of results, default 6
-- Returns: `products` array, plus `resultsCount`, `pageCount`, `categories`, `filters`
-- Does NOT require authentication
+- `term` — search query (e.g. "piim", "juust", "kana filee")
+- `count` — number of results, defaults to 6
+
+Returns JSON array with: `id`, `name`, `price`, `unit`, `inStock`, `minAmount`, `priceCoeff`, `storageType`.
+
+## Browser API Reference (Cart Operations)
+
+Cart operations must be made via `mcp__claude-in-chrome__javascript_tool` in an epromo.ee tab.
 
 ### Add Items to Cart
 
@@ -107,7 +113,7 @@ fetch('/api/proxy/update-b2c-cart', {
 
 ## Important Notes
 
-- **Cloudflare WAF**: All API calls MUST go through the browser. curl/Node.js/fetch from CLI will be blocked.
+- **Cloudflare WAF**: GET requests work via `curl_cffi` (Chrome TLS impersonation). PUT/POST requests MUST go through the browser.
 - **Authentication**: The JWT token is stored in the `token` cookie, valid for ~365 days.
 - **Language**: Product names may appear in English or Estonian depending on the product.
 - **Stock**: Check `inStock` before adding. Out-of-stock items cannot be ordered.
