@@ -9,9 +9,15 @@ CONFIG_FILE="${HOME}/.config/epromo/credentials"
 if [ -f "$CONFIG_FILE" ]; then
   source "$CONFIG_FILE"
 fi
-EPROMO_TOKEN="${EPROMO_TOKEN:-}"
-EPROMO_ADDRESS="${EPROMO_ADDRESS:-}"
-EPROMO_CF_CLEARANCE="${EPROMO_CF_CLEARANCE:-}"
+export EPROMO_TOKEN="${EPROMO_TOKEN:-}"
+export EPROMO_ADDRESS="${EPROMO_ADDRESS:-}"
+export EPROMO_CF_CLEARANCE="${EPROMO_CF_CLEARANCE:-}"
+
+# Fail loudly if credentials are missing
+if [ -z "$EPROMO_TOKEN" ] || [ -z "$EPROMO_ADDRESS" ]; then
+  echo '{"error": "Credentials not configured. Run the setup steps in SKILL.md first: extract token and DeliveryAddress cookies from an authenticated epromo.ee browser session, then run epromo-setup.sh <token> <address>"}' >&2
+  exit 1
+fi
 
 python3 -c "
 import json, sys, os
