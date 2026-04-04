@@ -4,16 +4,40 @@ set -euo pipefail
 TERM="${1:?Usage: epromo-search.sh <term> [count]}"
 COUNT="${2:-6}"
 
+# Token and address from environment, or defaults
+EPROMO_TOKEN="${EPROMO_TOKEN:-}"
+EPROMO_ADDRESS="${EPROMO_ADDRESS:-}"
+EPROMO_CF_CLEARANCE="${EPROMO_CF_CLEARANCE:-}"
+
 python3 -c "
-import json, sys
-from urllib.parse import quote
+import json, sys, os
 from curl_cffi import requests
 
-term = quote(sys.argv[1])
+term = sys.argv[1]
 count = sys.argv[2]
+token = os.environ.get('EPROMO_TOKEN', '')
+address = os.environ.get('EPROMO_ADDRESS', '')
+cf_clearance = os.environ.get('EPROMO_CF_CLEARANCE', '')
 
-r = requests.get(
-    f'https://epromo.ee/api/proxy/quick-search?search={term}&count={count}&page=1',
+headers = {
+    'content-type': 'application/json',
+    'languages': 'et',
+}
+cookies = {}
+
+if token:
+    headers['authorization'] = f'Bearer {token}'
+    cookies['token'] = token
+if address:
+    headers['addressid'] = address
+if cf_clearance:
+    cookies['cf_clearance'] = cf_clearance
+
+r = requests.post(
+    'https://epromo.ee/api/proxy/search-products',
+    json={'search': term, 'count': str(count), 'page': '1', 'filters': []},
+    headers=headers,
+    cookies=cookies,
     impersonate='chrome116'
 )
 
@@ -28,8 +52,9 @@ products = [{
     'price': p['priceWithVat'],
     'unit': p['measureUnit'],
     'inStock': p['inStock'],
+    'inStockAmount': p.get('inStockAmount', '?'),
     'minAmount': p['minimumAmount'],
-    'priceCoeff': p['priceCoefficient'],
+    'priceCoeff': p.get('priceCoefficient', ''),
     'storageType': p['storageType']
 } for p in data.get('products', [])]
 
