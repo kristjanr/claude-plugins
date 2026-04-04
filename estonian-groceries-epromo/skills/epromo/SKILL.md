@@ -1,12 +1,14 @@
 ---
 name: epromo
-description: Use when the user wants to shop for groceries at ePromo.ee, search for products, add items to their ePromo cart, or view their cart. Uses a hybrid approach — search via CLI (curl_cffi), cart operations via Chrome browser.
+description: Use when the user mentions ePromo, epromo.ee, or wants to search, compare prices, browse, or buy products at ePromo. Triggers on Estonian grocery requests mentioning ePromo (otsi, võrdle, hinnad, osta, ostukorv). ALWAYS use this skill's search scripts instead of navigating to epromo.ee in the browser.
 allowed-tools: Bash(*epromo-search.sh*), Bash(*epromo-setup.sh*), mcp__claude-in-chrome__javascript_tool, mcp__claude-in-chrome__tabs_context_mcp, mcp__claude-in-chrome__navigate, mcp__claude-in-chrome__computer
 ---
 
 # ePromo.ee Grocery Shopping
 
-Build an ePromo.ee grocery cart through conversation.
+**CRITICAL:** For product searches and browsing, ALWAYS use `epromo-search.sh`. NEVER open epromo.ee in the browser to search or browse products. The browser is ONLY needed for cart operations (add/view/clear) because Cloudflare blocks API PUT requests.
+
+Build an ePromo.ee grocery cart through conversation, or help the user research and compare products.
 
 **Note:** ePromo is a HoReCa/wholesale-oriented store — minimum order quantities are often 1–10 kg, and packages are larger than in regular grocery shops. Keep this in mind when suggesting products.
 
@@ -66,6 +68,15 @@ epromo-setup.sh <token> <address> <cf_clearance>
 6. When done, tell the user to open epromo.ee in their browser to complete checkout
 
 Always confirm product choices with the user before adding to cart. If a search returns multiple close matches, ask which one they want.
+
+## Product Research / Comparison Workflow
+
+When the user wants to browse, research, or compare products (not necessarily buy):
+
+1. **Search** for the relevant categories using `epromo-search.sh`
+2. **Present results** in a clear table: name, price (with VAT), unit price, stock, min order
+3. If comparing across stores, present side-by-side
+4. Only proceed to cart operations if the user explicitly asks to buy
 
 ## Scripts
 
