@@ -1,7 +1,7 @@
 ---
 name: epromo
 description: Use when the user wants to shop for groceries at ePromo.ee, search for products, add items to their ePromo cart, or view their cart. Uses a hybrid approach — search via CLI (curl_cffi), cart operations via Chrome browser.
-allowed-tools: Bash(*epromo-search.sh*), mcp__claude-in-chrome__javascript_tool, mcp__claude-in-chrome__tabs_context_mcp, mcp__claude-in-chrome__navigate, mcp__claude-in-chrome__computer
+allowed-tools: Bash(*epromo-search.sh*), Bash(*epromo-setup.sh*), mcp__claude-in-chrome__javascript_tool, mcp__claude-in-chrome__tabs_context_mcp, mcp__claude-in-chrome__navigate, mcp__claude-in-chrome__computer
 ---
 
 # ePromo.ee Grocery Shopping
@@ -24,28 +24,37 @@ ePromo.ee is behind Cloudflare WAF. This plugin uses a **hybrid approach**:
 - For **cart operations**: an epromo.ee tab **open and logged in** in the Claude-in-Chrome browser
 - If not logged in, navigate to `https://epromo.ee/auth/login` and help the user log in first
 
-## Setup
+## Setup (First-Time or When Credentials Expire)
 
-The search script needs authentication for correct results (Estonian product names, accurate stock levels). Set these environment variables:
+The search script needs authentication for correct results. Credentials are stored in `~/.config/epromo/credentials` and persist across sessions.
 
-```bash
-export EPROMO_TOKEN="<JWT token from browser cookie named 'token'>"
-export EPROMO_ADDRESS="<address ID from browser cookie named 'DeliveryAddress'>"
-export EPROMO_CF_CLEARANCE="<cf_clearance cookie value from browser>"
-```
+**If credentials are already saved, skip this section.**
 
-To get these values, run this in an epromo.ee browser tab via `javascript_tool`:
+To set up or refresh credentials:
+
+1. **Find the ePromo tab** using `tabs_context_mcp` — must be logged in at epromo.ee
+2. **Extract token and address** by running this via `javascript_tool`:
 
 ```javascript
 JSON.stringify({
   token: document.cookie.match(/token=([^;]+)/)?.[1] || 'not found',
-  address: document.cookie.match(/DeliveryAddress=([^;]+)/)?.[1] || 'not found'
+  address: decodeURIComponent(document.cookie.match(/DeliveryAddress=([^;]+)/)?.[1] || 'not found')
 })
 ```
 
-The `cf_clearance` cookie is httpOnly — the user must copy it from browser DevTools (Application > Cookies).
+3. **Save credentials** using `epromo-setup.sh`:
 
-Token validity: ~365 days. `cf_clearance` validity: varies (hours to days).
+```
+epromo-setup.sh <token> <address>
+```
+
+4. **For `cf_clearance`** (optional, needed if Cloudflare blocks requests): ask the user to copy this cookie value from browser DevTools (Application > Cookies > cf_clearance), then re-run:
+
+```
+epromo-setup.sh <token> <address> <cf_clearance>
+```
+
+**Token validity:** ~365 days. **`cf_clearance`:** hours to days (refresh when searches start failing).
 
 ## Workflow
 
@@ -72,9 +81,21 @@ epromo-search.sh <term> [count]
 
 - `term` — search query (e.g. "piim", "juust", "kana filee")
 - `count` — number of results, defaults to 6
-- Requires `EPROMO_TOKEN`, `EPROMO_ADDRESS`, and `EPROMO_CF_CLEARANCE` environment variables
+- Reads credentials from `~/.config/epromo/credentials` (run `epromo-setup.sh` first)
 
 Returns JSON array with: `id`, `name`, `price`, `unit`, `inStock`, `inStockAmount`, `minAmount`, `priceCoeff`, `storageType`.
+
+### epromo-setup.sh
+
+Save authentication credentials to `~/.config/epromo/credentials`.
+
+```
+epromo-setup.sh <token> <address> [cf_clearance]
+```
+
+- `token` — JWT token from browser cookie named `token`
+- `address` — delivery address ID from browser cookie named `DeliveryAddress`
+- `cf_clearance` — optional, Cloudflare clearance cookie (httpOnly, must be copied from DevTools)
 
 ## Browser API Reference (Cart Operations)
 

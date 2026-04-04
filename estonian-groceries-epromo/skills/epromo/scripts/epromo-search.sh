@@ -4,7 +4,11 @@ set -euo pipefail
 TERM="${1:?Usage: epromo-search.sh <term> [count]}"
 COUNT="${2:-6}"
 
-# Token and address from environment, or defaults
+# Load credentials from config file, env vars override
+CONFIG_FILE="${HOME}/.config/epromo/credentials"
+if [ -f "$CONFIG_FILE" ]; then
+  source "$CONFIG_FILE"
+fi
 EPROMO_TOKEN="${EPROMO_TOKEN:-}"
 EPROMO_ADDRESS="${EPROMO_ADDRESS:-}"
 EPROMO_CF_CLEARANCE="${EPROMO_CF_CLEARANCE:-}"
