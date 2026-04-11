@@ -202,7 +202,11 @@ Run via `javascript_tool` in the logged-in Chrome tab (navigate to homeexchange.
       reactivity: h.user?.reactivityLevel,
       isVerified: h.isVerified,
       available: h.searchContext?.next_availability,
-      url: 'https://www.homeexchange.com/homes/view/' + h.homeId
+      url: 'https://www.homeexchange.com/homes/view/' + h.homeId,
+      description: h.translations?.description?.en?.substring(0, 500),
+      hostDescription: h.translations?.hostDescription?.en?.substring(0, 300),
+      amenities: h.amenities?.map(a => a.slug),
+      surrounding: h.surrounding,
     }))
   };
 })()
@@ -227,10 +231,12 @@ Found {total} homes in {DESTINATION}
    💎 {gpPerNight} GP/night · min {minNights} nights
    📅 Available: {available.from} → {available.to}
    🏠 Host: {hostName}
+   📝 {description}        ← omit if null
+   💬 {hostDescription}    ← omit if null
    🔗 [View listing]({url})
 ```
 
-If a home has no reviews, show "No reviews yet".
+If a home has no reviews, show "No reviews yet". Omit `description` and `hostDescription` lines if null. If `amenities` or `surrounding` contain values relevant to the user's stated preferences (e.g. baby-bed, parking, seaside), call them out inline rather than listing everything.
 
 ---
 
