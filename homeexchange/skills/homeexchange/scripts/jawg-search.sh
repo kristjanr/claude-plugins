@@ -19,7 +19,7 @@ if [ -z "$JAWG_TOKEN" ]; then
   exit 1
 fi
 
-LAYERS="island,dependency,neighbourhood,locality,borough,localadmin,county,macrocounty,region,macroregion,country,postalcode,venue"
+LAYERS="island,dependency,locality,borough,localadmin,county,macrocounty,region,macroregion,country"
 ENCODED_TEXT=$(python3 -c "import urllib.parse, sys; print(urllib.parse.quote(sys.argv[1]))" "$TEXT")
 
 curl -sf \

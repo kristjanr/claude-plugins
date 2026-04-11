@@ -141,55 +141,69 @@ Example output:
 ]
 ```
 
-Use the `id` from the best match directly as `location_id` in the search body. If multiple plausible results are returned, show them to the user and ask which one they mean before proceeding.
+**Picking the right result:**
+- The `id` is used directly as `location_id` in the search body — both `openstreetmap:LAYER:relation/ID` and `whosonfirst:LAYER:ID` formats work as-is
+- Prefer `island` or `county` layer over `locality` for islands and archipelagos (e.g. Mallorca, Tenerife, Greek islands) — gives broader geographic coverage
+- For countries that are the whole destination (Malta, Cyprus), `country` layer works fine
+- If multiple plausible results are returned, show them to the user and ask which one they mean
+
+**Query tips** — what works and what doesn't:
+- Do NOT append "island" to queries — it confuses the geocoder ("Malta island" → 0 results; "Malta" → works fine)
+- Small resorts may not have their own result — use the nearest locality or district instead (e.g. Ayia Napa → try "Paralimni")
+- Small islands (e.g. Gozo) may have no island-level result — fall back to locality or country
+- For archipelagos, run separate searches per island — they behave independently in the API
 
 **First-time setup** — if the script errors about a missing token, ask the user to:
-1. Open HomeExchange in Chrome and type something in the search box
-2. Open DevTools → Network tab, find the `autocomplete?...` request to `api.jawg.io`
-3. Right-click it → Copy → Copy URL
+1. Open HomeExchange in Chrome and type something in the destination search box
+2. Open DevTools → Network tab, filter by "jawg"
+3. Right-click the `autocomplete?...` request → Copy → Copy URL
 4. Run: `jawg-setup.sh <url>`
 
 ---
 
 ## Step 3: Call the API from the browser
 
-Run via `javascript_tool` in the logged-in Chrome tab (navigate to homeexchange.com first if needed):
+Run via `javascript_tool` in the logged-in Chrome tab (navigate to homeexchange.com first if needed).
+
+**Important:** top-level `await` fails in `javascript_tool` — always wrap in an async IIFE:
 
 ```javascript
-const resp = await fetch('https://bff.homeexchange.com/search/homes?offset=0&limit=20', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'X-SEARCH-API-VERSION': 'v2',
-    'X-HE-PAGE-NAME': 'SEARCH_PAGE',
-    'X-LEGACY-RESPONSE': 'false'
-  },
-  body: JSON.stringify(body)
-});
-const data = await resp.json();
+(async () => {
+  const resp = await fetch('https://bff.homeexchange.com/search/homes?offset=0&limit=20', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-SEARCH-API-VERSION': 'v2',
+      'X-HE-PAGE-NAME': 'SEARCH_PAGE',
+      'X-LEGACY-RESPONSE': 'false'
+    },
+    body: JSON.stringify(body)
+  });
+  const data = await resp.json();
 
-// Return clean mapped fields to avoid truncation
-({
-  total: data.total,
-  homes: (data.homes || []).map(h => ({
-    id: h.homeId,
-    title: h.translations?.title?.en,
-    city: h.translations?.location?.city?.en,
-    country: h.translations?.location?.country?.en,
-    bedrooms: h.beds?.bedroomsCount,
-    beds: h.beds?.bedsCount,
-    capacity: h.capacity,
-    gpPerNight: h.gpPerNight,
-    minNights: h.minimumOfNights,
-    rating: h.user?.rating,
-    reviews: h.user?.reviews,
-    hostName: h.user?.firstName,
-    reactivity: h.user?.reactivityLevel,
-    isVerified: h.isVerified,
-    available: h.searchContext?.next_availability,
-    url: 'https://www.homeexchange.com/en/home/' + h.homeId
-  }))
-})
+  // Return clean mapped fields to avoid truncation
+  return {
+    total: data.total,
+    homes: (data.homes || []).map(h => ({
+      id: h.homeId,
+      title: h.translations?.title?.en,
+      city: h.translations?.location?.city?.en,
+      country: h.translations?.location?.country?.en,
+      bedrooms: h.beds?.bedroomsCount,
+      beds: h.beds?.bedsCount,
+      capacity: h.capacity,
+      gpPerNight: h.gpPerNight,
+      minNights: h.minimumOfNights,
+      rating: h.user?.rating,
+      reviews: h.user?.reviews,
+      hostName: h.user?.firstName,
+      reactivity: h.user?.reactivityLevel,
+      isVerified: h.isVerified,
+      available: h.searchContext?.next_availability,
+      url: 'https://www.homeexchange.com/en/home/' + h.homeId
+    }))
+  };
+})()
 ```
 
 For more results, paginate: `offset=20`, `offset=40`, up to `offset=80`.
