@@ -127,19 +127,43 @@ const body = {
 
 ## Step 2: Resolve the location
 
-Use Nominatim to get the OSM relation ID:
-```
-GET https://nominatim.openstreetmap.org/search?q={PLACE}&format=json&limit=3
-```
-Take the first result with `osm_type: "relation"`. Build the `location_id`:
-- Region/state → `openstreetmap:macroregion:relation/{osm_id}`
-- City → `openstreetmap:city:relation/{osm_id}`
-- Country → `openstreetmap:country:relation/{osm_id}`
+Use HomeExchange's own Jawg autocomplete — it returns the `location_id` in exactly the format the search API expects, and handles disambiguation.
 
-If the user already has HomeExchange open in Chrome, the last-searched location is faster:
+**Step 2a — get the Jawg token from the page** (run in the browser tab on homeexchange.com):
+```javascript
+const token = (() => {
+  // Try Nuxt public config (most common)
+  const nuxt = window.__NUXT__;
+  if (nuxt?.config?.public?.jawgApiKey) return nuxt.config.public.jawgApiKey;
+  if (nuxt?.config?.public?.jawgToken) return nuxt.config.public.jawgToken;
+  if (nuxt?.config?.public?.mapToken) return nuxt.config.public.mapToken;
+  // Try inline scripts
+  for (const s of document.scripts) {
+    const m = s.textContent.match(/"jawg[A-Za-z]*[Kk]ey"\s*:\s*"([^"]+)"|"jawg[A-Za-z]*[Tt]oken"\s*:\s*"([^"]+)"/);
+    if (m) return m[1] || m[2];
+  }
+  return null;
+})();
+token;
+```
+
+**Step 2b — call the autocomplete** (run in the same browser tab):
+```javascript
+const resp = await fetch(
+  `https://api.jawg.io/places/v1/autocomplete?access-token=${token}` +
+  `&layers=island,dependency,locality,borough,localadmin,county,macrocounty,region,macroregion,country` +
+  `&sources=wof,osm&size=5&text=${encodeURIComponent(DESTINATION)}`
+);
+const data = await resp.json();
+data.features.map(f => ({ id: f.properties.id, label: f.properties.label, layer: f.properties.layer }));
+```
+
+The `id` field from the chosen result is the `location_id` to use directly in the search body. If multiple results are returned, show them to the user and ask which one they mean before proceeding.
+
+**Fallback** — if the token can't be found, check localStorage for a previous search:
 ```javascript
 const saved = JSON.parse(localStorage.getItem(window.user?.id + '_search') || '{}');
-saved.query?.location?.polygon  // already has location_id and provider
+saved.query?.location?.polygon  // has location_id and provider if user searched before
 ```
 
 ---
