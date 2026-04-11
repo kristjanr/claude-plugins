@@ -7,6 +7,8 @@ description: Search for available homes on HomeExchange.com using the user's log
 
 Searches HomeExchange.com for available homes using the user's existing browser session (no credentials needed — auth is handled automatically by the browser).
 
+**Reference:** All valid filter values, types, and API field paths are in `references/filters.json`. Read it when constructing the API request or when explaining options to the user during the interview.
+
 ---
 
 ## Step 0: Interview the user
