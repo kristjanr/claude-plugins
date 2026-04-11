@@ -9,6 +9,8 @@ Searches HomeExchange.com for available homes using the user's existing browser 
 
 **Reference:** All valid filter values, types, and API field paths are in `references/filters.json`. Read it when constructing the API request or when explaining options to the user during the interview.
 
+**Past searches:** If the user asks to see past searches or recall previous results, run `list-searches.sh`. To re-display a past result, read its `results.json` and re-run Step 4.
+
 ---
 
 ## Step 0: Interview the user
@@ -229,6 +231,42 @@ Found {total} homes in {DESTINATION}
 ```
 
 If a home has no reviews, show "No reviews yet".
+
+---
+
+## Step 5: Save the search
+
+After displaying results, persist the search to disk using the Write tool.
+
+**Folder path:**
+```
+~/.homeexchange/searches/{Country}/{Location}/{today}_{arrival}_{departure}_{adults}a[_{babies}b]
+```
+
+- **Country**: `country` field from the Jawg result (e.g. `Cyprus`)
+- **Location**: place name from the Jawg label before the first comma (e.g. `Paphos`)
+- **Search folder**: `{YYYY-MM-DD today}_{arrival}_{departure}_{adults}a` + `_{babies}b` if babies > 0
+
+Example: `~/.homeexchange/searches/Cyprus/Paphos/2026-04-11_2026-10-11_2026-11-14_2a_2b`
+
+**Files to write:**
+
+`query.json` — the `search_query` body used (pretty-printed JSON):
+```json
+{ ...the search_query object from Step 1... }
+```
+
+`results.json` — the API response (pretty-printed JSON):
+```json
+{ "total": 42, "homes": [ ...mapped homes array... ] }
+```
+
+Create the directory first:
+```bash
+mkdir -p ~/.homeexchange/searches/{Country}/{Location}/{search-folder}
+```
+
+Then write both files with the Write tool. Confirm to the user where the search was saved.
 
 ---
 
