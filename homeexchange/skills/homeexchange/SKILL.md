@@ -200,7 +200,7 @@ Run via `javascript_tool` in the logged-in Chrome tab (navigate to homeexchange.
       reactivity: h.user?.reactivityLevel,
       isVerified: h.isVerified,
       available: h.searchContext?.next_availability,
-      url: 'https://www.homeexchange.com/en/home/' + h.homeId
+      url: 'https://www.homeexchange.com/homes/view/' + h.homeId
     }))
   };
 })()
@@ -225,7 +225,7 @@ Found {total} homes in {DESTINATION}
    💎 {gpPerNight} GP/night · min {minNights} nights
    📅 Available: {available.from} → {available.to}
    🏠 Host: {hostName}
-   🔗 {url}
+   🔗 [View listing]({url})
 ```
 
 If a home has no reviews, show "No reviews yet".
