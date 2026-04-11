@@ -127,44 +127,27 @@ const body = {
 
 ## Step 2: Resolve the location
 
-Use HomeExchange's own Jawg autocomplete — it returns the `location_id` in exactly the format the search API expects, and handles disambiguation.
+Use the `jawg-search.sh` script — it calls HomeExchange's own Jawg autocomplete and returns `location_id` values in exactly the format the search API expects.
 
-**Step 2a — get the Jawg token from the page** (run in the browser tab on homeexchange.com):
-```javascript
-const token = (() => {
-  // Try Nuxt public config (most common)
-  const nuxt = window.__NUXT__;
-  if (nuxt?.config?.public?.jawgApiKey) return nuxt.config.public.jawgApiKey;
-  if (nuxt?.config?.public?.jawgToken) return nuxt.config.public.jawgToken;
-  if (nuxt?.config?.public?.mapToken) return nuxt.config.public.mapToken;
-  // Try inline scripts
-  for (const s of document.scripts) {
-    const m = s.textContent.match(/"jawg[A-Za-z]*[Kk]ey"\s*:\s*"([^"]+)"|"jawg[A-Za-z]*[Tt]oken"\s*:\s*"([^"]+)"/);
-    if (m) return m[1] || m[2];
-  }
-  return null;
-})();
-token;
+```
+jawg-search.sh "DESTINATION"
 ```
 
-**Step 2b — call the autocomplete** (run in the same browser tab):
-```javascript
-const resp = await fetch(
-  `https://api.jawg.io/places/v1/autocomplete?access-token=${token}` +
-  `&layers=island,dependency,locality,borough,localadmin,county,macrocounty,region,macroregion,country` +
-  `&sources=wof,osm&size=5&text=${encodeURIComponent(DESTINATION)}`
-);
-const data = await resp.json();
-data.features.map(f => ({ id: f.properties.id, label: f.properties.label, layer: f.properties.layer }));
+Example output:
+```json
+[
+  { "id": "openstreetmap:locality:relation/7900565", "label": "Paphos, Cyprus", "layer": "locality", "country": "Cyprus" },
+  { "id": "openstreetmap:macroregion:relation/3311303", "label": "Paphos District, Cyprus", "layer": "macroregion", "country": "Cyprus" }
+]
 ```
 
-The `id` field from the chosen result is the `location_id` to use directly in the search body. If multiple results are returned, show them to the user and ask which one they mean before proceeding.
+Use the `id` from the best match directly as `location_id` in the search body. If multiple plausible results are returned, show them to the user and ask which one they mean before proceeding.
 
-**Fallback** — if the token can't be found, check localStorage for a previous search:
-```javascript
-const saved = JSON.parse(localStorage.getItem(window.user?.id + '_search') || '{}');
-saved.query?.location?.polygon  // has location_id and provider if user searched before
-```
+**First-time setup** — if the script errors about a missing token, ask the user to:
+1. Open HomeExchange in Chrome and type something in the search box
+2. Open DevTools → Network tab, find the `autocomplete?...` request to `api.jawg.io`
+3. Right-click it → Copy → Copy URL
+4. Run: `jawg-setup.sh <url>`
 
 ---
 
