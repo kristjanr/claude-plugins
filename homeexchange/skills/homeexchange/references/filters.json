@@ -1,0 +1,109 @@
+{
+    "last_search": {
+        "place": "Algarve, Portugal",
+        "id": 244770903
+    },
+    "search_query": {
+        "location": {
+            "bounds": {
+                "ne": {
+                    "lat": 44.954714183708205,
+                    "lon": -2.1129231402426853
+                },
+                "sw": {
+                    "lat": 28.65694569317192,
+                    "lon": -14.279050092168774
+                }
+            }
+        },
+        "calendar": {
+            "date_ranges": [
+                {
+                    "from": "2026-10-11",
+                    "to": "2026-11-14"
+                }
+            ],
+            "flexibility": 30,
+            "exchange_types": [
+                "guest-wanted",
+                "reciprocal",
+                "available"
+            ]
+        },
+        "guestpoints": {
+            "from": 75,
+            "to": 241
+        },
+        "home": {
+            "amenities": [
+                "public-transit-access",
+                "heating-system",
+                "dishwasher",
+                "washing-machine",
+                "dryer",
+                "bathtub",
+                "electric-car-plug",
+                "tv",
+                "wifi",
+                "a-c",
+                "elevator",
+                "parking-space",
+                "jacuzzi",
+                "fireplace",
+                "gym",
+                "garden",
+                "balcony-terrace",
+                "bbq",
+                "swimming-pool",
+                "bicycle",
+                "car",
+                "cleaning-person",
+                "baby-bed",
+                "kids-toys",
+                "playground",
+                "baby-gear",
+                "secured-pool",
+                "dedicated-workspace",
+                "high-speed-connexion",
+                "disabled-access",
+                "children-welcome",
+                "pets-welcome",
+                "smokers-welcome"
+            ],
+            "surrounding": [
+                "seaside",
+                "villages",
+                "countryside",
+                "mountains",
+                "cities",
+                "isolated",
+                "island",
+                "lakes"
+            ],
+            "size": {
+                "beds": {
+                    "adults": 2,
+                    "babies": 2
+                },
+                "bedrooms": 2,
+                "bathrooms": 1
+            },
+            "exclude_animals": [
+                "cat",
+                "dog",
+                "other"
+            ],
+            "eco_level": 4
+        },
+        "filters": [
+            "no-bed-up",
+            "home-verified",
+            "response-rate-above-threshold"
+        ],
+        "reverse": [
+            2634252
+        ],
+        "favorite": true,
+        "extended": true
+    }
+}
