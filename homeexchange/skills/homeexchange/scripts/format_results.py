@@ -11,7 +11,7 @@ import json, sys, argparse
 
 def format_home(h, rank):
     rating, reviews = h.get("rating"), h.get("reviews", 0)
-    rating_str = f"⭐ {rating:.1f} ({reviews} reviews)" if rating and reviews else ("⭐ No reviews yet")
+    rating_str = f"⭐ {rating:.1f} ({reviews} reviews)" if rating is not None else "⭐ No reviews yet"
     reactivity = h.get("reactivity", 0)
     verified = " ✓ Verified" if h.get("isVerified") else ""
     avail = h.get("available")
@@ -62,15 +62,15 @@ def main():
                 "reactivity": (h.get("user") or {}).get("reactivityLevel"),
                 "isVerified": h.get("isVerified", False),
                 "available": (h.get("searchContext") or {}).get("next_availability"),
-                "url": f"https://www.homeexchange.com/en/home/{h['homeId']}"
+                "url": f"https://www.homeexchange.com/homes/view/{h['homeId']}"
             })
         else:
             homes.append(h)
 
-    if args.max_gp: homes = [h for h in homes if h.get("gpPerNight") and h["gpPerNight"] <= args.max_gp]
-    if args.min_bedrooms: homes = [h for h in homes if h.get("bedrooms") and h["bedrooms"] >= args.min_bedrooms]
-    if args.min_rating: homes = [h for h in homes if h.get("rating") and h["rating"] >= args.min_rating]
-    if args.min_capacity: homes = [h for h in homes if h.get("capacity") and h["capacity"] >= args.min_capacity]
+    if args.max_gp: homes = [h for h in homes if h.get("gpPerNight") is not None and h["gpPerNight"] <= args.max_gp]
+    if args.min_bedrooms: homes = [h for h in homes if h.get("bedrooms") is not None and h["bedrooms"] >= args.min_bedrooms]
+    if args.min_rating: homes = [h for h in homes if h.get("rating") is not None and h["rating"] >= args.min_rating]
+    if args.min_capacity: homes = [h for h in homes if h.get("capacity") is not None and h["capacity"] >= args.min_capacity]
 
     homes.sort(key=lambda h: h.get("gpPerNight") or 9999 if args.sort == "gp"
                else (-(h.get("rating") or 0), -(h.get("reviews") or 0)) if args.sort == "rating"

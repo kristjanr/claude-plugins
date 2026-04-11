@@ -20,7 +20,7 @@ while IFS= read -r query_file; do
   results_file="${dir}/results.json"
   total=""
   if [ -f "$results_file" ]; then
-    total=$(python3 -c "import json; d=json.load(open('${results_file}')); print(d.get('total','?'))" 2>/dev/null || echo "?")
+    total=$(python3 -c "import json,sys; d=json.load(open(sys.argv[1])); print(d.get('total','?'))" "$results_file" 2>/dev/null || echo "?")
   fi
   printf "%-30s  %-25s  %-40s  %s homes\n" "$country" "$location" "$search_folder" "$total"
   COUNT=$((COUNT + 1))

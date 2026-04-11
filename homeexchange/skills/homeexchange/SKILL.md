@@ -50,7 +50,7 @@ const body = {
   last_search: { place: "DESTINATION" },
   search_query: {
 
-    // LOCATION — resolved via Nominatim (see Step 2)
+    // LOCATION — resolved via Jawg autocomplete (see Step 2)
     location: {
       polygon: {
         location_id: "openstreetmap:PLACE_TYPE:relation/OSM_ID",
@@ -85,14 +85,14 @@ const body = {
 
       // AMENITIES — only include codes the user asked for
       amenities: [
-        // Family:       "baby-bed", "kids-toys", "playground", "baby-gear"
+        // Family:       "baby-bed", "kids-toys", "playground", "baby-gear", "secured-pool"
         // Accessibility:"children-welcome", "pets-welcome", "disabled-access", "smokers-welcome"
         // Remote work:  "dedicated-workspace", "high-speed-connexion"
         // Basics:       "wifi", "heating-system", "dishwasher", "washing-machine",
         //               "dryer", "bathtub", "electric-car-plug", "tv"
         // Premium:      "a-c", "elevator", "parking-space", "jacuzzi", "fireplace",
         //               "gym", "garden", "balcony-terrace", "bbq", "swimming-pool",
-        //               "bicycle", "car", "cleaning-person", "secured-pool"
+        //               "bicycle", "car", "cleaning-person"
         // Location:     "public-transit-access"
       ],
 
@@ -167,10 +167,11 @@ Example output:
 
 Run via `javascript_tool` in the logged-in Chrome tab (navigate to homeexchange.com first if needed).
 
-**Important:** top-level `await` fails in `javascript_tool` — always wrap in an async IIFE:
+**Important:** top-level `await` fails in `javascript_tool` — always wrap in an async IIFE. Declare `const body = {...}` before or inside the IIFE — do not split it across separate code blocks:
 
 ```javascript
 (async () => {
+  const body = { /* assembled in Step 1 */ };
   const resp = await fetch('https://bff.homeexchange.com/search/homes?offset=0&limit=20', {
     method: 'POST',
     headers: {
