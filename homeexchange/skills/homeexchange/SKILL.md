@@ -247,14 +247,15 @@ After displaying results, persist the search to disk using the Write tool.
 
 **Folder path:**
 ```
-~/.homeexchange/searches/{Country}/{Location}/{today}_{arrival}_{departure}_{adults}a[_{babies}b]
+{working-directory}/searches/{Country}/{Location}/{today}_{arrival}_{departure}_{adults}a[_{babies}b]
 ```
 
+- **Working directory**: the current working directory (use `pwd` via Bash to confirm if needed)
 - **Country**: `country` field from the Jawg result (e.g. `Cyprus`)
 - **Location**: place name from the Jawg label before the first comma (e.g. `Paphos`)
 - **Search folder**: `{YYYY-MM-DD today}_{arrival}_{departure}_{adults}a` + `_{babies}b` if babies > 0
 
-Example: `~/.homeexchange/searches/Cyprus/Paphos/2026-04-11_2026-10-11_2026-11-14_2a_2b`
+Example: `{working-directory}/searches/Cyprus/Paphos/2026-04-11_2026-10-11_2026-11-14_2a_2b`
 
 **Files to write:**
 
@@ -270,7 +271,7 @@ Example: `~/.homeexchange/searches/Cyprus/Paphos/2026-04-11_2026-10-11_2026-11-1
 
 Create the directory first:
 ```bash
-mkdir -p ~/.homeexchange/searches/{Country}/{Location}/{search-folder}
+mkdir -p {working-directory}/searches/{Country}/{Location}/{search-folder}
 ```
 
 Then write both files with the Write tool. Confirm to the user where the search was saved.
