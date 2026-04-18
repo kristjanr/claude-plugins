@@ -145,9 +145,15 @@ Example output:
 
 **Picking the right result:**
 - The `id` is used directly as `location_id` in the search body — both `openstreetmap:LAYER:relation/ID` and `whosonfirst:LAYER:ID` formats work as-is
-- Prefer `island` or `county` layer over `locality` for islands and archipelagos (e.g. Mallorca, Tenerife, Greek islands) — gives broader geographic coverage
-- For countries that are the whole destination (Malta, Cyprus), `country` layer works fine
-- If multiple plausible results are returned, show them to the user and ask which one they mean
+- **If there is exactly 1 result, use it directly.**
+- **If there are 2 or more results, always show them all to the user and ask which one to use — never auto-pick.** Format them as a numbered list with label and layer so the user can make an informed choice, e.g.:
+  ```
+  I found multiple matches for "Mallorca":
+  1. Mallorca, Spain (island)
+  2. Palma de Mallorca, Spain (locality)
+  3. Mallorca County, Spain (county)
+  Which should I use? Note: island/county covers more area; locality is just the city.
+  ```
 
 **Query tips** — what works and what doesn't:
 - Do NOT append "island" to queries — it confuses the geocoder ("Malta island" → 0 results; "Malta" → works fine)
