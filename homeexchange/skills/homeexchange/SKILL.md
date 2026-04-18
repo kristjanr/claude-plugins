@@ -9,7 +9,7 @@ Searches HomeExchange.com for available homes using the user's existing browser 
 
 **Reference:** All valid filter values, types, and API field paths are in `references/filters.json`. Read it when constructing the API request or when explaining options to the user during the interview.
 
-**Past searches:** If the user asks to see past searches or recall previous results, run `list-searches.sh`. To re-display a past result, read its `results.json` and re-run Step 4.
+**Past searches:** If the user asks to see past searches or recall previous results, run `list-searches.sh` (from the working directory — it looks in `./searches`). To re-display a past result, run `format_results.py <path/to/results.json>` — it accepts `--sort gp|rating|reviews`, `--max-gp`, `--min-bedrooms`, `--min-rating`, `--limit` flags.
 
 ---
 

@@ -32,6 +32,15 @@ cf_clearance = os.environ.get('EPROMO_CF_CLEARANCE', '')
 headers = {
     'content-type': 'application/json',
     'languages': 'et',
+    'app-version': '3.3.0',
+    'origin': 'https://epromo.ee',
+    'referer': 'https://epromo.ee/ee/search',
+    'accept': '*/*',
+    'accept-language': 'en,et;q=0.9',
+    'dnt': '1',
+    'sec-fetch-dest': 'empty',
+    'sec-fetch-mode': 'cors',
+    'sec-fetch-site': 'same-origin',
 }
 cookies = {}
 
@@ -48,7 +57,7 @@ r = requests.post(
     json={'search': term, 'count': str(count), 'page': '1', 'filters': []},
     headers=headers,
     cookies=cookies,
-    impersonate='chrome116'
+    impersonate='chrome136'
 )
 
 if r.status_code != 200:

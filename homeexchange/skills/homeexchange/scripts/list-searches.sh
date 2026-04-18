@@ -4,10 +4,10 @@ set -euo pipefail
 # List all saved HomeExchange searches.
 # Usage: list-searches.sh
 
-BASE="${HOME}/.homeexchange/searches"
+BASE="./searches"
 
 if [ ! -d "$BASE" ]; then
-  echo "No searches saved yet. Searches are stored in ${BASE} after each HomeExchange search."
+  echo "No searches saved yet in the current directory (${PWD}/searches)."
   exit 0
 fi
 
