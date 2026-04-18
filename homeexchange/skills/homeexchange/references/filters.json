@@ -163,5 +163,29 @@
     "field": "search_query.extended",
     "type": "boolean",
     "description": "Broadens the search area slightly beyond the selected location bounds"
+  },
+
+  "location": {
+    "field": "search_query.location",
+    "type": "object",
+    "description": "Two mutually exclusive formats — use bounds (preferred) when a radius was given, polygon otherwise",
+    "formats": {
+      "bounds": {
+        "description": "Bounding box — preferred; compute via bounds-from-place.sh <place> <radius_km>",
+        "fields": {
+          "ne.lat": "northeast corner latitude",
+          "ne.lon": "northeast corner longitude",
+          "sw.lat": "southwest corner latitude",
+          "sw.lon": "southwest corner longitude"
+        }
+      },
+      "polygon": {
+        "description": "Named-region polygon from Jawg — fallback when no radius given",
+        "fields": {
+          "location_id": "Jawg location id (openstreetmap:LAYER:relation/ID or whosonfirst:LAYER:ID)",
+          "provider": "always 'Jawg'"
+        }
+      }
+    }
   }
 }

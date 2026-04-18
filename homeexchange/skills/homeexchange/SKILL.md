@@ -18,14 +18,15 @@ Searches HomeExchange.com for available homes using the user's existing browser 
 Ask these **core questions** in a single conversational message:
 
 1. **Where** do you want to stay?
-2. **When?** — arrival and departure dates
-3. **Who's coming?** — number of adults and babies/small children (each need their own bed)
-4. **How flexible** are you with the dates? (in days either side)
-5. **Exchange type** — GuestPoints only, reciprocal home swap, or either?
-6. **GuestPoints budget** — min and max GP/night?
-7. **Min bedrooms?**
-8. **Entire home only**, or is a private room OK?
-9. **Any must-have amenities for children?** — e.g. baby bed, kids' toys, playground, baby gear, children-welcome
+2. **Search radius** — how far from the center of that destination? (e.g. 30 km, 50 km, 100 km — skip if you want the full region)
+3. **When?** — arrival and departure dates
+4. **Who's coming?** — number of adults and babies/small children (each need their own bed)
+5. **How flexible** are you with the dates? (in days either side)
+6. **Exchange type** — GuestPoints only, reciprocal home swap, or either?
+7. **GuestPoints budget** — min and max GP/night?
+8. **Min bedrooms?**
+9. **Entire home only**, or is a private room OK?
+10. **Any must-have amenities for children?** — e.g. baby bed, kids' toys, playground, baby gear, children-welcome
 
 Then ask: *"That covers the essentials. Want to set any of these too, or should I search now?"*
 
@@ -50,7 +51,17 @@ const body = {
   last_search: { place: "DESTINATION" },
   search_query: {
 
-    // LOCATION — resolved via Jawg autocomplete (see Step 2)
+    // LOCATION — two formats; prefer bounds when a radius was given (see Step 2)
+    //
+    // Option A — bounds (preferred): use when user gave a radius
+    location: {
+      bounds: {
+        ne: { lat: NE_LAT, lon: NE_LON },
+        sw: { lat: SW_LAT, lon: SW_LON }
+      }
+    },
+    //
+    // Option B — polygon (fallback): use when no radius given
     location: {
       polygon: {
         location_id: "openstreetmap:PLACE_TYPE:relation/OSM_ID",
@@ -129,7 +140,48 @@ const body = {
 
 ## Step 2: Resolve the location
 
-Use the `jawg-search.sh` script — it calls HomeExchange's own Jawg autocomplete and returns `location_id` values in exactly the format the search API expects.
+Choose the approach based on whether the user gave a radius:
+
+---
+
+### Option A — Bounds (preferred, when user gave a radius)
+
+Run `bounds-from-place.sh` to geocode the place and compute a bounding box:
+
+```
+bounds-from-place.sh "DESTINATION" RADIUS_KM
+```
+
+Example:
+```
+bounds-from-place.sh "Algarve" 80
+```
+
+Example output:
+```json
+{
+  "ne": { "lat": 38.436259, "lon": -6.423804 },
+  "sw": { "lat": 36.714611, "lon": -9.591097 },
+  "label": "Algarve, Portugal",
+  "country": "Portugal",
+  "center": { "lat": 37.575435, "lon": -7.99245 }
+}
+```
+
+Use `ne` and `sw` directly in the `location.bounds` field. Use `label` and `country` for the save path (Step 5).
+
+**Choosing a radius:**
+- City neighbourhood / town: 20–30 km
+- City + surroundings: 40–60 km
+- Region or coast: 80–150 km
+
+**If the script returns an error or empty result**, fall back to Option B below.
+
+---
+
+### Option B — Polygon (fallback, when no radius given)
+
+Use the `jawg-search.sh` script — it returns `location_id` values in exactly the format the search API expects.
 
 ```
 jawg-search.sh "DESTINATION"
@@ -138,15 +190,15 @@ jawg-search.sh "DESTINATION"
 Example output:
 ```json
 [
-  { "id": "openstreetmap:locality:relation/7900565", "label": "Paphos, Cyprus", "layer": "locality", "country": "Cyprus" },
-  { "id": "openstreetmap:macroregion:relation/3311303", "label": "Paphos District, Cyprus", "layer": "macroregion", "country": "Cyprus" }
+  { "id": "openstreetmap:locality:relation/7900565", "label": "Paphos, Cyprus", "layer": "locality", "country": "Cyprus", "lat": 34.775, "lon": 32.424 },
+  { "id": "openstreetmap:macroregion:relation/3311303", "label": "Paphos District, Cyprus", "layer": "macroregion", "country": "Cyprus", "lat": 34.916, "lon": 32.434 }
 ]
 ```
 
 **Picking the right result:**
-- The `id` is used directly as `location_id` in the search body — both `openstreetmap:LAYER:relation/ID` and `whosonfirst:LAYER:ID` formats work as-is
+- The `id` is used directly as `location_id` in the search body
 - **If there is exactly 1 result, use it directly.**
-- **If there are 2 or more results, always show them all to the user and ask which one to use — never auto-pick.** Format them as a numbered list with label and layer so the user can make an informed choice, e.g.:
+- **If there are 2 or more results, always show them all to the user and ask which one to use — never auto-pick.** Format them as a numbered list with label and layer:
   ```
   I found multiple matches for "Mallorca":
   1. Mallorca, Spain (island)
@@ -155,13 +207,15 @@ Example output:
   Which should I use? Note: island/county covers more area; locality is just the city.
   ```
 
-**Query tips** — what works and what doesn't:
+**Query tips:**
 - Do NOT append "island" to queries — it confuses the geocoder ("Malta island" → 0 results; "Malta" → works fine)
 - Small resorts may not have their own result — use the nearest locality or district instead (e.g. Ayia Napa → try "Paralimni")
 - Small islands (e.g. Gozo) may have no island-level result — fall back to locality or country
 - For archipelagos, run separate searches per island — they behave independently in the API
 
-**First-time setup** — if the script errors about a missing token, ask the user to:
+---
+
+**First-time setup** — if either script errors about a missing token, ask the user to:
 1. Open HomeExchange in Chrome and type something in the destination search box
 2. Open DevTools → Network tab, filter by "jawg"
 3. Right-click the `autocomplete?...` request → Copy → Copy URL
@@ -257,8 +311,8 @@ After displaying results, persist the search to disk using the Write tool.
 ```
 
 - **Working directory**: the current working directory (use `pwd` via Bash to confirm if needed)
-- **Country**: `country` field from the Jawg result (e.g. `Cyprus`)
-- **Location**: place name from the Jawg label before the first comma (e.g. `Paphos`)
+- **Country**: `country` field from the Jawg or bounds result (e.g. `Portugal`)
+- **Location**: place name from the label before the first comma (e.g. `Algarve`); for bounds searches, append the radius: `Algarve-80km`
 - **Search folder**: `{YYYY-MM-DD today}_{arrival}_{departure}_{adults}a` + `_{babies}b` if babies > 0
 
 Example: `{working-directory}/searches/Cyprus/Paphos/2026-04-11_2026-10-11_2026-11-14_2a_2b`

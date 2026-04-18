@@ -38,6 +38,8 @@ results = [
     'label': f['properties']['label'],
     'layer': f['properties']['layer'],
     'country': f['properties'].get('country', ''),
+    'lat': f['geometry']['coordinates'][1],
+    'lon': f['geometry']['coordinates'][0],
   }
   for f in data.get('features', [])
 ]
